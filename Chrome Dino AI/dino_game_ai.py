@@ -6,26 +6,28 @@ import random
 import time
 
 
-DINO_IMGS = [	pygame.image.load(os.path.join("imgs", "run1.png")),
-				pygame.image.load(os.path.join("imgs", "run2.png")),
-				pygame.image.load(os.path.join("imgs", "run3.png")),
-				pygame.image.load(os.path.join("imgs", "run4.png"))]
+DINO_IMGS = [	pygame.image.load(os.path.join("img", "run1.png")),
+				pygame.image.load(os.path.join("img", "run2.png")),
+				pygame.image.load(os.path.join("img", "run3.png")),
+				pygame.image.load(os.path.join("img", "run4.png"))]
 
-DINO_CROUCH_IMGS = [	pygame.image.load(os.path.join("imgs", "low1.png")),
-						pygame.image.load(os.path.join("imgs", "low2.png")),
-						pygame.image.load(os.path.join("imgs", "low3.png"))]
+DINO_CROUCH_IMGS = [	pygame.image.load(os.path.join("img", "low1.png")),
+						pygame.image.load(os.path.join("img", "low2.png")),
+						pygame.image.load(os.path.join("img", "low3.png"))]
 
-CACTUS_IMGS = [	pygame.image.load(os.path.join("imgs", "cactus1.png")),
-				pygame.image.load(os.path.join("imgs", "cactus2.png")),
-				pygame.image.load(os.path.join("imgs", "cactus3.png")),
-				pygame.image.load(os.path.join("imgs", "cactus4.png")),
-				pygame.image.load(os.path.join("imgs", "cactus5.png"))]
+CACTUS_IMGS = [	pygame.image.load(os.path.join("img", "cactus1.png")),
+				pygame.image.load(os.path.join("img", "cactus2.png")),
+				pygame.image.load(os.path.join("img", "cactus3.png")),
+				pygame.image.load(os.path.join("img", "cactus4.png")),
+				pygame.image.load(os.path.join("img", "cactus5.png"))]
 
-PTERO_IMGS = [	 pygame.transform.scale(pygame.image.load(os.path.join("imgs", "enemy1.png")), (50, 30)),
-				 pygame.transform.scale(pygame.image.load(os.path.join("imgs", "enemy2.png")), (50, 30)),
-				 pygame.transform.scale(pygame.image.load(os.path.join("imgs", "enemy3.png")), (50, 30)) ]
+PTERO_IMGS = [	 pygame.transform.scale(pygame.image.load(os.path.join("img", "enemy1.png")), (50, 30)),
+				 pygame.transform.scale(pygame.image.load(os.path.join("img", "enemy2.png")), (50, 30)),
+				 pygame.transform.scale(pygame.image.load(os.path.join("img", "enemy3.png")), (50, 30)) ]
 
-FLOOR_IMG = pygame.image.load(os.path.join("imgs", "floor.png"))
+FLOOR_IMG = pygame.image.load(os.path.join("img", "floor.png"))
+
+BUTTON_IMG = pygame.image.load(os.path.join("img", "restart.png"))
 
 WIN_WIDTH = 591
 WIN_HEIGHT = 500
@@ -38,10 +40,11 @@ pygame.init()
 pygame.font.init()
 pygame.display.set_icon(DINO_IMGS[0])
 pygame.display.set_caption('AI learns Chrome Dino Game')
-STAT_FONT = pygame.font.SysFont("console", 20)
+STAT_FONT = pygame.font.Font(os.path.join("font", "pixelmix.ttf"), 15)
 
 
 class Dino:
+
 	IMGS = DINO_IMGS
 	IMGS_CROUCH = DINO_CROUCH_IMGS
 	MAX_ROTATION = 25
@@ -228,13 +231,28 @@ class Floor:
 		win.blit(self.IMG, (self.x2 ,self.y))
 
 
-def draw_window(win, dinos, floor, cactuses, pteros, score, best_score, gen, alive):
+class Button:
+
+	IMG = BUTTON_IMG
+
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+
+	def collide(self, mouse_pos):
+		return True
+
+	def draw(self, win):
+		win.blit(self.IMG, (self.x, self.y))
+
+
+def draw_window(win, dinos, floor, cactuses, pteros, score, best_score, gen, alive, restart_button):
 
 	# Display general information.
 	text = STAT_FONT.render("Score : " + str(score), 1, (0, 0, 0))
 	win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
 
-	text = STAT_FONT.render("Best Score : " + str(best_score), 1, (0, 0, 0))
+	text = STAT_FONT.render("Best : " + str(best_score), 1, (0, 0, 0))
 	win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 60))
 
 	text = STAT_FONT.render("Generation : " + str(gen), 1, (0, 0, 0))
@@ -242,6 +260,9 @@ def draw_window(win, dinos, floor, cactuses, pteros, score, best_score, gen, ali
 
 	text = STAT_FONT.render("Alive : " + str(alive), 1, (0, 0, 0))
 	win.blit(text, (10, 60))
+
+	# Draw a restart button.
+	restart_button.draw(win)
 
 	# Draw the floor.
 	floor.draw(win)
@@ -292,6 +313,9 @@ def main(genomes, config):
 		g.fitness = 0
 		ge.append(g)
 
+	# Create restart button.
+	restart_button = Button(WIN_WIDTH/2, 10)
+
 	# Create the first cactus.
 	cactuses = [Cactus(WIN_WIDTH + 20, 410 - DINO_IMGS[0].get_height())]
 	#Create the first ptero.
@@ -310,12 +334,20 @@ def main(genomes, config):
 	run = True
 
 	while run:
+		# 30 fps.
 		clock.tick(30)
+
+		# Event handling.
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				run = False
 				pygame.quit()
 				quit()
+			if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+				mouse = pygame.mouse.get_pos()
+				if restart_button.collide(mouse):
+					print("restart")
+
 
 		# Move the dinos according the neural network if alive.
 		cactus_ind = 0
@@ -448,7 +480,7 @@ def main(genomes, config):
 		win.fill((255,255,255))
 
 		# Draw the game.
-		draw_window(win, dinos, floor, cactuses, pteros, score, BEST_SCORE, GEN, len(dinos))
+		draw_window(win, dinos, floor, cactuses, pteros, score, BEST_SCORE, GEN, len(dinos), restart_button)
 
 
 # AI Functions:
