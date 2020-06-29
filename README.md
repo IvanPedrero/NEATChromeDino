@@ -4,7 +4,7 @@
 
 # How to run?
 
-· Using terminal inside the folder /Chrome Dino AI/, run the command:
+· Open a command terminal and navigate inside the folder /Chrome Dino AI/. Once inside, run the command:
 ```
 python dino_game_ai.py 
 ```
